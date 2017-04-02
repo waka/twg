@@ -1,0 +1,29 @@
+{
+    "memo": "e6a5ebede0f553b31391e115dec4eeb9ef72305f98568f3a1922b41a14ea46b8",
+    "projects": [
+        {
+            "name": "github.com/mattn/go-runewidth",
+            "version": "v0.0.2",
+            "revision": "9e777a8366cce605130a531d2cd6363d07ad7317",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mrjones/oauth",
+            "branch": "master",
+            "revision": "3f67d9c274355678b2f9844b08d643e2f9213340",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/nsf/termbox-go",
+            "branch": "master",
+            "revision": "91bae1bb5fa9ee504905ecbe7043fa30e92feaa3",
+            "packages": [
+                "."
+            ]
+        }
+    ]
+}
