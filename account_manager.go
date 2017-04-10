@@ -38,17 +38,5 @@ func (self *AccountManager) Auth() error {
 		self.config.AccessTokenSecret,
 	)
 
-	// check and retry if invalid access token
-	if err := self.apiClient.Check(); err != nil {
-		switch e := err.(type) {
-		case *InvalidAccessTokenError:
-			self.config.SetAccessToken("", "")
-			// retry
-			self.Auth()
-		default:
-			return err
-		}
-	}
-
 	return nil
 }

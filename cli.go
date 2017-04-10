@@ -19,15 +19,15 @@ const (
 )
 
 func printErrorf(format string, args ...interface{}) {
-	fmt.Errorf(format, args...)
+	fmt.Println(fmt.Errorf(format, args...))
 }
 
 type CLI struct {
 }
 
 // Run main loop.
-func (cli *CLI) Run(args []string) int {
-	args, err := cli.parseArgs(args)
+func (self *CLI) Run(args []string) int {
+	args, err := self.parseArgs(args)
 	if err != nil {
 		return ExitCodeParseFlagsError
 	}
@@ -38,17 +38,17 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeAuthError
 	}
 
-	looper := NewLooper(args, accountManager.GetApiClient())
-	if err := looper.MainLoop(); err != nil {
+	handler := NewHandler(args, accountManager.GetApiClient())
+	if err := handler.MainLoop(); err != nil {
 		printErrorf("Failed to render: %s", err)
 		return ExitCodeRenderingProcessError
 	}
 
-	fmt.Println("Bye")
+	printErrorf("Bye")
 	return ExitCodeOK
 }
 
-func (cli *CLI) parseArgs(args []string) ([]string, error) {
+func (self *CLI) parseArgs(args []string) ([]string, error) {
 	var version bool
 
 	flags := flag.NewFlagSet(AppName, flag.ContinueOnError)
