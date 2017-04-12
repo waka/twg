@@ -1,14 +1,14 @@
 package views
 
-type CommandView struct {
+type ListView struct {
 	View
 }
 
-func NewCommandView() *CommandView {
-	return &CommandView{}
+func NewListView() *ListView {
+	return &ListView{}
 }
 
-func (self *CommandView) Draw() {
+func (self *ListView) Draw() {
 	_, height := getWindowSize()
 
 	// first line

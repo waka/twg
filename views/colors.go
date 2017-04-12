@@ -19,11 +19,29 @@ const (
 	ColorBlack      = termbox.ColorBlack
 )
 
-type colors struct {
+type colorOptions struct {
 	fg termbox.Attribute
 	bg termbox.Attribute
 }
 
-func NewColors(fg termbox.Attribute, bg termbox.Attribute) *colors {
-	return &colors{fg: fg, bg: bg}
+type Color func(*colorOptions)
+
+func ForeGround(fg termbox.Attribute) Color {
+	return func(co *colorOptions) {
+		co.fg = fg
+	}
+}
+
+func BackGround(bg termbox.Attribute) Color {
+	return func(co *colorOptions) {
+		co.bg = bg
+	}
+}
+
+func NewColors(colors ...Color) *colorOptions {
+	co := colorOptions{}
+	for _, c := range colors {
+		c(&co)
+	}
+	return &co
 }
