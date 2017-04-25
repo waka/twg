@@ -1,14 +1,17 @@
 package views
 
+// ListView is one of views.
 type ListView struct {
 	View
 }
 
+// NewListView returns instance.
 func NewListView() *ListView {
 	return &ListView{}
 }
 
-func (self *ListView) Draw() {
+// Draw ...
+func (view *ListView) Draw() {
 	_, height := getWindowSize()
 
 	// first line

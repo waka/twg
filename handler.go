@@ -1,53 +1,50 @@
 package main
 
 import (
-	"os"
-
 	"github.com/nsf/termbox-go"
 	"github.com/waka/twg/twitter"
 	"github.com/waka/twg/views"
 )
 
-// Handler handle termbox events.
+// EventHandler
 type Handler struct {
-	args        []string
-	apiClient   *twitter.Client
-	quit        bool
-	contentView *views.CommandView
-	commandView *views.CommandView
+	args      []string
+	apiClient *twitter.Client
+	quit      bool
+	container *views.Container
 }
 
 func NewHandler(args []string, apiClient *twitter.Client) *Handler {
 	return &Handler{args: args, apiClient: apiClient, quit: false}
 }
 
-func (self *Handler) MainLoop() error {
-	defer func() {
-		self.finish()
-	}()
-
-	if err := self.setupTermbox(); err != nil {
+func (handler *Handler) MainLoop() error {
+	if err := handler.setupContainer(); err != nil {
 		return err
 	}
-	if err := self.setupView(); err != nil {
-		return err
-	}
+	defer handler.finish()
 
-	ch := make(chan termbox.Event)
+	handler.reset()
+
+	eventCh := make(chan termbox.Event)
+	defer close(eventCh)
+
 	go func() {
 		for {
-			ch <- termbox.PollEvent()
+			eventCh <- termbox.PollEvent()
 		}
 	}()
 
 	for {
 		select {
-		case event := <-ch:
+		case event := <-eventCh:
 			if event.Type == termbox.EventResize {
-				self.reset()
+				handler.reset()
+			} else {
+				handler.handleEvent(event)
 			}
 		}
-		if self.quit {
+		if handler.quit {
 			break
 		}
 	}
@@ -55,43 +52,53 @@ func (self *Handler) MainLoop() error {
 	return nil
 }
 
-func (self *Handler) setupTermbox() error {
-	if err := termbox.Init(); err != nil {
+func (handler *Handler) setupContainer() error {
+	handler.container = views.NewContainer()
+	if err := handler.container.Setup(); err != nil {
 		return err
 	}
+	return nil
+}
 
-	termbox.SetOutputMode(termbox.Output256)
-	termbox.SetInputMode(termbox.InputAlt)
+func (handler *Handler) reset() {
+	handler.container.Render()
+}
 
-	if os.Getenv("TERM") == "xterm" {
-		/*
-			xtermOffSequences := []string{
-				// Ctrl + Arrow Keys
-				"\x1b[1;5A", "\x1b[1;5B", "\x1b[1;5C", "\x1b[1;5D",
-				// Shift + Arrow Left, Right
-				"\x1b[1;2C", "\x1b[1;2D",
-			}
-			termbox.SetDisableEscSequence(xtermOffSequences)
-		*/
+func (handler *Handler) finish() {
+	//handler.apiClient.Close()
+	handler.container.Dispose()
+}
+
+func (handler *Handler) handleEvent(event termbox.Event) {
+	switch handler.handleKeyEvent(event) {
+	case ACTION_RELOAD:
+		// refresh data and scroll top
+	case ACTION_QUIT:
+		// quit loop
+		handler.quit = true
+	case ACTION_UP:
+		// select next tweet
+	case ACTION_DOWN:
+		// select prev tweet
+	case ENTER_NORMAL_MODE:
+		// disable command view
+		handler.container.ChangeCommandMode(false)
+	case ENTER_COMMAND_MODE:
+		// enable command view
+		handler.container.ChangeCommandMode(true)
+		handler.container.SetRuneInCommand(':')
+	default:
+		if handler.container.IsCommandMode() && event.Ch != 0 {
+			handler.container.SetRuneInCommand(event.Ch)
+		}
 	}
-
-	termbox.Flush()
-
-	return nil
 }
 
-func (self *Handler) setupView() error {
-	self.commandView = views.NewCommandView()
-	return nil
-}
-
-func (self *Handler) reset() {
-	termbox.Clear(views.ColorBackground, views.ColorBackground)
-	self.commandView.Draw()
-	termbox.Flush()
-}
-
-func (self *Handler) finish() {
-	//self.apiClient.Close()
-	termbox.Close()
+func (handler *Handler) handleKeyEvent(event termbox.Event) Action {
+	for _, keybind := range KeybindList {
+		if event.Mod == keybind.Mod && event.Key == keybind.Key && event.Ch == keybind.Ch {
+			return keybind.Action
+		}
+	}
+	return NO_ACTION
 }

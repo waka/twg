@@ -22,12 +22,13 @@ func printErrorf(format string, args ...interface{}) {
 	fmt.Println(fmt.Errorf(format, args...))
 }
 
+// CLI is empty struct.
 type CLI struct {
 }
 
-// Run main loop.
-func (self *CLI) Run(args []string) int {
-	args, err := self.parseArgs(args)
+// Run is main function.
+func (cli *CLI) Run(args []string) int {
+	args, err := cli.parseArgs(args)
 	if err != nil {
 		return ExitCodeParseFlagsError
 	}
@@ -38,7 +39,7 @@ func (self *CLI) Run(args []string) int {
 		return ExitCodeAuthError
 	}
 
-	handler := NewHandler(args, accountManager.GetApiClient())
+	handler := NewHandler(args, accountManager.GetAPIClient())
 	if err := handler.MainLoop(); err != nil {
 		printErrorf("Failed to render: %s", err)
 		return ExitCodeRenderingProcessError
@@ -48,7 +49,7 @@ func (self *CLI) Run(args []string) int {
 	return ExitCodeOK
 }
 
-func (self *CLI) parseArgs(args []string) ([]string, error) {
+func (cli *CLI) parseArgs(args []string) ([]string, error) {
 	var version bool
 
 	flags := flag.NewFlagSet(AppName, flag.ContinueOnError)

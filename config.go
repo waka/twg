@@ -8,11 +8,13 @@ import (
 	"os/user"
 )
 
+// Config has api access token.
 type Config struct {
 	AccessToken       string
 	AccessTokenSecret string
 }
 
+// LoadConfig load json from local.
 func LoadConfig() *Config {
 	config := &Config{}
 	path := configFilePath()
@@ -28,8 +30,9 @@ func LoadConfig() *Config {
 	return config
 }
 
-func (self *Config) Save() bool {
-	json, err := json.Marshal(self)
+// Save config to local
+func (config *Config) Save() bool {
+	json, err := json.Marshal(config)
 	if err != nil {
 		return false
 	}
@@ -38,13 +41,15 @@ func (self *Config) Save() bool {
 	return true
 }
 
-func (self *Config) IsAuthenticated() bool {
-	return self.AccessToken != "" && self.AccessTokenSecret != ""
+// IsAuthenticated return whether you authenticated?
+func (config *Config) IsAuthenticated() bool {
+	return config.AccessToken != "" && config.AccessTokenSecret != ""
 }
 
-func (self *Config) SetAccessToken(token string, secret string) {
-	self.AccessToken = token
-	self.AccessTokenSecret = secret
+// SetAccessToken set token to config.
+func (config *Config) SetAccessToken(token string, secret string) {
+	config.AccessToken = token
+	config.AccessTokenSecret = secret
 }
 
 func fileExists(path string) bool {

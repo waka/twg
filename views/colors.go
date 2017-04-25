@@ -4,6 +4,7 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+// Colors defs.
 const (
 	ColorBackground = termbox.ColorDefault
 	ColorRed        = termbox.ColorRed
