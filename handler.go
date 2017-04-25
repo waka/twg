@@ -70,7 +70,7 @@ func (handler *Handler) finish() {
 }
 
 func (handler *Handler) handleEvent(event termbox.Event) {
-	switch handler.handleKeyEvent(event) {
+	switch handler.getKeyEvent(event) {
 	case ACTION_RELOAD:
 		// refresh data and scroll top
 	case ACTION_QUIT:
@@ -94,11 +94,14 @@ func (handler *Handler) handleEvent(event termbox.Event) {
 	}
 }
 
-func (handler *Handler) handleKeyEvent(event termbox.Event) Action {
+func (handler *Handler) getKeyEvent(event termbox.Event) Action {
 	for _, keybind := range KeybindList {
 		if event.Mod == keybind.Mod && event.Key == keybind.Key && event.Ch == keybind.Ch {
 			return keybind.Action
 		}
 	}
 	return NO_ACTION
+}
+
+func (handler *Handler) processCommand(event termbox.Event) {
 }
