@@ -8,14 +8,20 @@ import (
 
 // EventHandler
 type Handler struct {
-	args      []string
-	apiClient *twitter.Client
-	quit      bool
-	container *views.Container
+	args        []string
+	apiClient   *twitter.Client
+	container   *views.Container
+	commandMode bool
+	quit        bool
 }
 
 func NewHandler(args []string, apiClient *twitter.Client) *Handler {
-	return &Handler{args: args, apiClient: apiClient, quit: false}
+	return &Handler{
+		args:        args,
+		apiClient:   apiClient,
+		commandMode: false,
+		quit:        false,
+	}
 }
 
 func (handler *Handler) MainLoop() error {
@@ -41,7 +47,11 @@ func (handler *Handler) MainLoop() error {
 			if event.Type == termbox.EventResize {
 				handler.reset()
 			} else {
-				handler.handleEvent(event)
+				if handler.commandMode {
+					handler.handleCommandEvent(event)
+				} else {
+					handler.handleEvent(event)
+				}
 			}
 		}
 		if handler.quit {
@@ -80,16 +90,20 @@ func (handler *Handler) handleEvent(event termbox.Event) {
 		// select next tweet
 	case ACTION_DOWN:
 		// select prev tweet
-	case ENTER_NORMAL_MODE:
-		// disable command view
-		handler.container.ChangeCommandMode(false)
 	case ENTER_COMMAND_MODE:
-		// enable command view
-		handler.container.ChangeCommandMode(true)
-		handler.container.SetRuneInCommand(':')
+		handler.enterCommandMode()
+	}
+}
+
+func (handler *Handler) handleCommandEvent(event termbox.Event) {
+	switch handler.getKeyEvent(event) {
+	case ACTION_COMMAND:
+		handler.processCommand()
+	case ENTER_NORMAL_MODE:
+		handler.leaveCommandMode()
 	default:
-		if handler.container.IsCommandMode() && event.Ch != 0 {
-			handler.container.SetRuneInCommand(event.Ch)
+		if event.Ch != 0 {
+			handler.container.AddRuneInCommand(event.Ch)
 		}
 	}
 }
@@ -103,5 +117,15 @@ func (handler *Handler) getKeyEvent(event termbox.Event) Action {
 	return NO_ACTION
 }
 
-func (handler *Handler) processCommand(event termbox.Event) {
+func (handler *Handler) enterCommandMode() {
+	handler.commandMode = true
+	handler.container.StartRuneInCommand()
+}
+
+func (handler *Handler) leaveCommandMode() {
+	handler.commandMode = false
+	handler.container.ClearRuneInCommand()
+}
+
+func (handler *Handler) processCommand() {
 }

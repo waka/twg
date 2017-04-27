@@ -4,7 +4,6 @@ import termbox "github.com/nsf/termbox-go"
 
 type Container struct {
 	viewMode     ViewMode
-	commandMode  bool
 	timelineView *TimelineView
 	mentionsView *MentionsView
 	listView     *ListView
@@ -36,7 +35,6 @@ func (container *Container) Setup() error {
 	termbox.SetInputMode(termbox.InputEsc | termbox.InputAlt)
 
 	container.viewMode = MODE_TIMELINE
-	container.commandMode = false
 
 	return nil
 }
@@ -45,15 +43,13 @@ func (container *Container) ChangeViewMode(viewMode ViewMode) {
 	container.viewMode = viewMode
 }
 
-func (container *Container) ChangeCommandMode(commandMode bool) {
-	container.commandMode = commandMode
+func (container *Container) StartRuneInCommand() {
 }
 
-func (container *Container) IsCommandMode() bool {
-	return container.commandMode
+func (container *Container) AddRuneInCommand(r rune) {
 }
 
-func (container *Container) SetRuneInCommand(r rune) {
+func (container *Container) ClearRuneInCommand() {
 }
 
 func (container *Container) Render() {
@@ -76,7 +72,7 @@ func (container *Container) RenderContents() {
 }
 
 func (container *Container) RenderCommand() {
-	container.commandView.Draw(container.viewMode, container.commandMode)
+	container.commandView.Draw(container.viewMode)
 	termbox.Flush()
 }
 

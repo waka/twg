@@ -9,7 +9,7 @@ func NewCommandView() *CommandView {
 	return &CommandView{}
 }
 
-func (view *CommandView) Draw(viewMode ViewMode, commandMode bool) {
+func (view *CommandView) Draw(viewMode ViewMode) {
 	_, height := getWindowSize()
 
 	// first line
@@ -35,4 +35,23 @@ func (view *CommandView) getViewModeString(viewMode ViewMode) string {
 		return "*List*"
 	}
 	return "*No mode*"
+}
+
+func byteSliceRemove(bytes []byte, from int, to int) []byte {
+	copy(bytes[from:], bytes[to:])
+	return bytes[:len(bytes)+from-to]
+}
+
+func byteSliceInsert(dst []byte, src []byte, pos int) []byte {
+	length := len(dst) + len(src)
+	if cap(dst) < length {
+		s := make([]byte, len(dst), length)
+		copy(s, dst)
+		dst = s
+	}
+	dst = dst[:length]
+	copy(dst[pos+len(src):], dst[pos:])
+	copy(dst[pos:], src)
+	return dst
+
 }
