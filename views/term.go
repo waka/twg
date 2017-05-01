@@ -37,3 +37,11 @@ func drawText(str string, x int, y int, colors *colorOptions) {
 		i += runewidth.RuneWidth(chr)
 	}
 }
+
+func setCursor(x int, y int) {
+	termbox.SetCursor(x, y)
+}
+
+func hideCursor() {
+	termbox.HideCursor()
+}

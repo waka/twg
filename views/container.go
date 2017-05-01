@@ -35,21 +35,17 @@ func (container *Container) Setup() error {
 	termbox.SetInputMode(termbox.InputEsc | termbox.InputAlt)
 
 	container.viewMode = MODE_TIMELINE
+	GetCommandEventEmitter().AddEventListener(container.commandView.handleEvent)
 
 	return nil
 }
 
+func (container *Container) GetViewMode() ViewMode {
+	return container.viewMode
+}
+
 func (container *Container) ChangeViewMode(viewMode ViewMode) {
 	container.viewMode = viewMode
-}
-
-func (container *Container) StartRuneInCommand() {
-}
-
-func (container *Container) AddRuneInCommand(r rune) {
-}
-
-func (container *Container) ClearRuneInCommand() {
 }
 
 func (container *Container) Render() {
@@ -77,5 +73,6 @@ func (container *Container) RenderCommand() {
 }
 
 func (container *Container) Dispose() {
+	GetCommandEventEmitter().RemoveEventListener(container.commandView.handleEvent)
 	termbox.Close()
 }

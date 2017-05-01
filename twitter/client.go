@@ -1,8 +1,12 @@
 package twitter
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/mrjones/oauth"
@@ -29,7 +33,16 @@ func NewClient(accessToken string, accessTokenSecret string) *Client {
 	return &Client{token: token}
 }
 
-func (c *Client) GetTimeline(ctx context.Context) {
+func (c *Client) GetTimeline() ([]Tweet, error) {
+	response, err := c.get(
+		apiURL("/1.1/statuses/home_timeline.json"),
+		map[string]string{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.tweetsByResponse(response)
 }
 
 func (c *Client) GetList(ctx context.Context) {
@@ -75,6 +88,21 @@ func (c *Client) consumer() *oauth.Consumer {
 	)
 
 	return c.cons
+}
+
+func (c *Client) tweetsByResponse(response *http.Response) ([]Tweet, error) {
+	decoder := c.jsonDecoder(response)
+	tweets := []Tweet{}
+	decoder.Decode(&tweets)
+	return tweets, nil
+}
+
+func (c *Client) jsonDecoder(response *http.Response) *json.Decoder {
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return json.NewDecoder(bytes.NewReader(data))
 }
 
 func apiURL(format string, args ...interface{}) string {

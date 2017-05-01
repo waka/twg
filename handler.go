@@ -1,6 +1,8 @@
 package main
 
 import (
+	"unicode/utf8"
+
 	"github.com/nsf/termbox-go"
 	"github.com/waka/twg/twitter"
 	"github.com/waka/twg/views"
@@ -31,6 +33,9 @@ func (handler *Handler) MainLoop() error {
 	defer handler.finish()
 
 	handler.reset()
+	if err := handler.loadTweet(); err != nil {
+		return err
+	}
 
 	eventCh := make(chan termbox.Event)
 	defer close(eventCh)
@@ -47,7 +52,7 @@ func (handler *Handler) MainLoop() error {
 			if event.Type == termbox.EventResize {
 				handler.reset()
 			} else {
-				if handler.commandMode {
+				if handler.commandMode && handler.getKeyEvent(event) != ACTION_QUIT {
 					handler.handleCommandEvent(event)
 				} else {
 					handler.handleEvent(event)
@@ -91,21 +96,38 @@ func (handler *Handler) handleEvent(event termbox.Event) {
 	case ACTION_DOWN:
 		// select prev tweet
 	case ENTER_COMMAND_MODE:
-		handler.enterCommandMode()
+		// delegate
+		handler.handleCommandEvent(event)
 	}
 }
 
 func (handler *Handler) handleCommandEvent(event termbox.Event) {
+	eventEmitter := views.GetCommandEventEmitter()
+
 	switch handler.getKeyEvent(event) {
-	case ACTION_COMMAND:
-		handler.processCommand()
+	case ENTER_COMMAND_MODE:
+		handler.commandMode = true
+		eventEmitter.Emit(views.CommandStart)
+	case ACTION_LEFT:
+		eventEmitter.Emit(views.CommandLeft)
+	case ACTION_RIGHT:
+		eventEmitter.Emit(views.CommandRight)
+	case ACTION_DELETE:
+		eventEmitter.Emit(views.CommandDelete)
+	case ACTION_EXECUTE_COMMAND:
+		eventEmitter.Emit(views.CommandExecute)
 	case ENTER_NORMAL_MODE:
-		handler.leaveCommandMode()
+		handler.commandMode = false
+		eventEmitter.Emit(views.CommandEnd)
 	default:
 		if event.Ch != 0 {
-			handler.container.AddRuneInCommand(event.Ch)
+			var u [utf8.UTFMax]byte
+			s := utf8.EncodeRune(u[:], event.Ch)
+			eventEmitter.EmitWithValue(views.CommandAdd, u[:s])
 		}
 	}
+
+	handler.container.RenderCommand()
 }
 
 func (handler *Handler) getKeyEvent(event termbox.Event) Action {
@@ -117,15 +139,23 @@ func (handler *Handler) getKeyEvent(event termbox.Event) Action {
 	return NO_ACTION
 }
 
-func (handler *Handler) enterCommandMode() {
-	handler.commandMode = true
-	handler.container.StartRuneInCommand()
-}
+func (handler *Handler) loadTweet() error {
+	var (
+		list []twitter.Tweet
+		err  error
+	)
+	switch handler.container.GetViewMode() {
+	case views.MODE_TIMELINE:
+		list, err = handler.apiClient.GetTimeline()
+	case views.MODE_LIST:
+		list, err = handler.apiClient.GetTimeline()
+	case views.MODE_MENTION:
+		list, err = handler.apiClient.GetTimeline()
+	}
+	if err != nil {
+		return err
+	}
+	handler.container.RenderContents()
 
-func (handler *Handler) leaveCommandMode() {
-	handler.commandMode = false
-	handler.container.ClearRuneInCommand()
-}
-
-func (handler *Handler) processCommand() {
+	return nil
 }
