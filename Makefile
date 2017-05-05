@@ -26,4 +26,4 @@ vet:
 
 lint:
 	@go get github.com/golang/lint/golint
-	go list ./... | grep -v vendor | xargs -n1 golint
+	go list ./... | grep -v vendor | xargs -n1 golint -min_confidence 1.1
