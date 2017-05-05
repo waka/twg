@@ -12,6 +12,7 @@ import (
 type Config struct {
 	AccessToken       string
 	AccessTokenSecret string
+	ScreenName        string
 }
 
 // LoadConfig load json from local.
@@ -47,9 +48,10 @@ func (config *Config) IsAuthenticated() bool {
 }
 
 // SetAccessToken set token to config.
-func (config *Config) SetAccessToken(token string, secret string) {
+func (config *Config) Set(token string, secret string, screenName string) {
 	config.AccessToken = token
 	config.AccessTokenSecret = secret
+	config.ScreenName = screenName
 }
 
 func fileExists(path string) bool {

@@ -8,7 +8,6 @@ import (
 
 type CommandView struct {
 	content []byte
-	command []byte
 	cursorX int
 }
 
@@ -16,30 +15,16 @@ func NewCommandView() *CommandView {
 	return &CommandView{cursorX: 0}
 }
 
-func (view *CommandView) Draw(viewMode ViewMode) {
+func (view *CommandView) GetValue() []byte {
+	return view.content
+}
+
+func (view *CommandView) Draw() {
 	_, height := getWindowSize()
-
-	// first line
-	fillLine(0, height-2, NewColors(BackGround(ColorGray2)))
-
-	mode := view.getViewModeString(viewMode)
-	drawText(mode, 2, height-2, NewColors(ForeGround(ColorYellow), BackGround(ColorGray2)))
 
 	// second line
 	fillLine(0, height-1, NewColors(BackGround(ColorBackground)))
 	view.drawCommandLine()
-}
-
-func (view *CommandView) getViewModeString(viewMode ViewMode) string {
-	switch viewMode {
-	case MODE_TIMELINE:
-		return "*Timeline*"
-	case MODE_MENTION:
-		return "*Mention*"
-	case MODE_LIST:
-		return "*List*"
-	}
-	return "*No mode*"
 }
 
 func (view *CommandView) handleEvent(event *CommandEvent) {
@@ -56,8 +41,6 @@ func (view *CommandView) handleEvent(event *CommandEvent) {
 		view.moveLeftCommand()
 	case CommandRight:
 		view.moveRightCommand()
-	case CommandExecute:
-		view.executeCommand()
 	}
 
 	if event.eventType == CommandEnd {
@@ -103,12 +86,10 @@ func (view *CommandView) moveRightCommand() {
 	view.moveCursorRight()
 }
 
-func (view *CommandView) executeCommand() {}
-
 func (view *CommandView) drawCommandLine() {
 	_, height := getWindowSize()
 	content := string(view.content)
-	drawText(content, 2, height-1, NewColors(ForeGround(ColorWhite), BackGround(ColorBackground)))
+	drawText(content, 1, height-1, NewColors(ForeGround(ColorWhite), BackGround(ColorBackground)))
 }
 
 func (view *CommandView) moveCursorLeft() {
@@ -130,7 +111,7 @@ func (view *CommandView) moveCursorRight() {
 func (view *CommandView) focusCursor() {
 	_, height := getWindowSize()
 	x := runewidth.StringWidth(string(view.content[:view.cursorX]))
-	x += 2
+	x += 1
 	setCursor(x, height-1)
 }
 

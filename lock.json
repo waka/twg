@@ -1,6 +1,14 @@
 {
-    "memo": "e6a5ebede0f553b31391e115dec4eeb9ef72305f98568f3a1922b41a14ea46b8",
+    "memo": "d83a9c10ab664810bc774155434526e19a4a2e3bb134b952a9712c9e9515bd6c",
     "projects": [
+        {
+            "name": "github.com/jessevdk/go-flags",
+            "version": "v1.2.0",
+            "revision": "48cf8722c3375517aba351d1f7577c40663a4407",
+            "packages": [
+                "."
+            ]
+        },
         {
             "name": "github.com/mattn/go-runewidth",
             "version": "v0.0.2",
@@ -20,7 +28,7 @@
         {
             "name": "github.com/nsf/termbox-go",
             "branch": "master",
-            "revision": "91bae1bb5fa9ee504905ecbe7043fa30e92feaa3",
+            "revision": "7994c181db7761ca3c67a217068cf31826113f5f",
             "packages": [
                 "."
             ]

@@ -18,7 +18,6 @@ const (
 	CommandDelete
 	CommandLeft
 	CommandRight
-	CommandExecute
 )
 
 func (eventType CommandEventType) String() string {
@@ -35,8 +34,6 @@ func (eventType CommandEventType) String() string {
 		return "CommandLeft"
 	case CommandRight:
 		return "CommandRight"
-	case CommandExecute:
-		return "CommandExecute"
 	}
 	return "Undef"
 }

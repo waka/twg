@@ -1,29 +1,21 @@
 package views
 
-import termbox "github.com/nsf/termbox-go"
+import (
+	termbox "github.com/nsf/termbox-go"
+	"github.com/waka/twg/twitter"
+)
 
 type Container struct {
-	viewMode     ViewMode
-	timelineView *TimelineView
-	mentionsView *MentionsView
-	listView     *ListView
-	commandView  *CommandView
+	tweetsView  *TweetsView
+	statusView  *StatusView
+	commandView *CommandView
 }
-
-type ViewMode int
-
-const (
-	MODE_TIMELINE ViewMode = iota + 1
-	MODE_MENTION
-	MODE_LIST
-)
 
 func NewContainer() *Container {
 	return &Container{
-		timelineView: NewTimelineView(),
-		mentionsView: NewMentionsView(),
-		listView:     NewListView(),
-		commandView:  NewCommandView(),
+		tweetsView:  NewTweetsView(),
+		statusView:  NewStatusView(),
+		commandView: NewCommandView(),
 	}
 }
 
@@ -34,42 +26,47 @@ func (container *Container) Setup() error {
 	termbox.SetOutputMode(termbox.Output256)
 	termbox.SetInputMode(termbox.InputEsc | termbox.InputAlt)
 
-	container.viewMode = MODE_TIMELINE
+	container.Clear()
+
 	GetCommandEventEmitter().AddEventListener(container.commandView.handleEvent)
 
 	return nil
 }
 
-func (container *Container) GetViewMode() ViewMode {
-	return container.viewMode
+func (container *Container) GetCommandValue() []byte {
+	return container.commandView.GetValue()
 }
 
-func (container *Container) ChangeViewMode(viewMode ViewMode) {
-	container.viewMode = viewMode
+func (container *Container) DrawTweets(tweets []*twitter.Tweet) {
+	container.tweetsView.Draw(tweets)
+}
+
+func (container *Container) DrawStatus(mode, status string) {
+	container.statusView.Draw(mode, status)
+}
+
+func (container *Container) DrawCommand() {
+	container.commandView.Draw()
+}
+
+func (container *Container) Clear() {
+	termbox.Clear(ColorBackground, ColorBackground)
 }
 
 func (container *Container) Render() {
-	container.RenderContents()
-	container.RenderCommand()
-}
-
-func (container *Container) RenderContents() {
-	termbox.Clear(ColorBackground, ColorBackground)
-
-	switch container.viewMode {
-	case MODE_TIMELINE:
-		container.timelineView.Draw()
-	case MODE_MENTION:
-		container.mentionsView.Draw()
-	case MODE_LIST:
-		container.listView.Draw()
-	}
 	termbox.Flush()
 }
 
-func (container *Container) RenderCommand() {
-	container.commandView.Draw(container.viewMode)
-	termbox.Flush()
+func (container *Container) UpSelectedTweet(tweets []*twitter.Tweet) {
+	container.tweetsView.UpCursor(tweets)
+}
+
+func (container *Container) DownSelectedTweet(tweets []*twitter.Tweet) {
+	container.tweetsView.DownCursor(tweets)
+}
+
+func (container *Container) GetSelectedTweet(tweets []*twitter.Tweet) *twitter.Tweet {
+	return tweets[container.tweetsView.GetCursorPosition()]
 }
 
 func (container *Container) Dispose() {

@@ -1,50 +1,49 @@
 package main
 
 import (
+	"fmt"
+	"time"
 	"unicode/utf8"
 
-	"github.com/nsf/termbox-go"
+	termbox "github.com/nsf/termbox-go"
 	"github.com/waka/twg/twitter"
 	"github.com/waka/twg/views"
 )
 
 // EventHandler
 type Handler struct {
-	args        []string
-	apiClient   *twitter.Client
+	command     *Command
+	consumer    *Consumer
 	container   *views.Container
 	commandMode bool
 	quit        bool
 }
 
-func NewHandler(args []string, apiClient *twitter.Client) *Handler {
+func NewHandler(command *Command, consumer *Consumer) *Handler {
 	return &Handler{
-		args:        args,
-		apiClient:   apiClient,
+		command:     command,
+		consumer:    consumer,
 		commandMode: false,
 		quit:        false,
 	}
 }
 
 func (handler *Handler) MainLoop() error {
-	if err := handler.setupContainer(); err != nil {
+	if err := handler.initialize(); err != nil {
 		return err
 	}
 	defer handler.finish()
 
-	handler.reset()
-	if err := handler.loadTweet(); err != nil {
-		return err
-	}
-
 	eventCh := make(chan termbox.Event)
 	defer close(eventCh)
-
 	go func() {
 		for {
 			eventCh <- termbox.PollEvent()
 		}
 	}()
+
+	timer := time.NewTicker(90 * time.Second)
+	defer timer.Stop()
 
 	for {
 		select {
@@ -52,17 +51,40 @@ func (handler *Handler) MainLoop() error {
 			if event.Type == termbox.EventResize {
 				handler.reset()
 			} else {
-				if handler.commandMode && handler.getKeyEvent(event) != ACTION_QUIT {
-					handler.handleCommandEvent(event)
-				} else {
-					handler.handleEvent(event)
+				switch GetActionTypeByEvent(event) {
+				case ACTION_TYPE_ALL:
+					handler.handleKeyEvent(event)
+				case ACTION_TYPE_BOTH:
+					handler.handleBothKeyEvent(event)
+				case ACTION_TYPE_TWEET:
+					handler.handleTweetKeyEvent(event)
+				default:
+					handler.handleCommandKeyEvent(event)
 				}
+			}
+		case <-timer.C:
+			if handler.command.IsReloadable() {
+				handler.reload()
 			}
 		}
 		if handler.quit {
 			break
 		}
 	}
+
+	return nil
+}
+
+func (handler *Handler) initialize() error {
+	if err := handler.setupContainer(); err != nil {
+		return err
+	}
+
+	// tweets for first view
+	if err := handler.loadTweets(); err != nil {
+		return err
+	}
+	handler.reset()
 
 	return nil
 }
@@ -75,50 +97,76 @@ func (handler *Handler) setupContainer() error {
 	return nil
 }
 
-func (handler *Handler) reset() {
-	handler.container.Render()
-}
-
-func (handler *Handler) finish() {
-	//handler.apiClient.Close()
-	handler.container.Dispose()
-}
-
-func (handler *Handler) handleEvent(event termbox.Event) {
-	switch handler.getKeyEvent(event) {
-	case ACTION_RELOAD:
-		// refresh data and scroll top
-	case ACTION_QUIT:
-		// quit loop
+func (handler *Handler) handleKeyEvent(event termbox.Event) {
+	if GetActionByEvent(event) == ACTION_QUIT {
 		handler.quit = true
-	case ACTION_UP:
-		// select next tweet
-	case ACTION_DOWN:
-		// select prev tweet
-	case ENTER_COMMAND_MODE:
-		// delegate
-		handler.handleCommandEvent(event)
+		return
 	}
-}
 
-func (handler *Handler) handleCommandEvent(event termbox.Event) {
 	eventEmitter := views.GetCommandEventEmitter()
 
-	switch handler.getKeyEvent(event) {
+	switch GetActionByEvent(event) {
+	case ENTER_NORMAL_MODE:
+		handler.commandMode = false
+		eventEmitter.Emit(views.CommandEnd)
 	case ENTER_COMMAND_MODE:
 		handler.commandMode = true
 		eventEmitter.Emit(views.CommandStart)
+	}
+
+	handler.reset()
+}
+
+func (handler *Handler) handleBothKeyEvent(event termbox.Event) {
+	if handler.commandMode {
+		handler.handleCommandKeyEvent(event)
+	} else {
+		handler.handleTweetKeyEvent(event)
+	}
+}
+
+func (handler *Handler) handleTweetKeyEvent(event termbox.Event) {
+	if handler.commandMode {
+		return
+	}
+
+	switch GetActionByEvent(event) {
+	case ACTION_RELOAD:
+		handler.resetWithStatus("loading tweets...")
+		handler.loadTweets()
+	case ACTION_K, ACTION_UP:
+		handler.container.UpSelectedTweet(handler.getTweets())
+	case ACTION_J, ACTION_DOWN:
+		handler.container.DownSelectedTweet(handler.getTweets())
+	}
+
+	handler.reset()
+}
+
+func (handler *Handler) handleCommandKeyEvent(event termbox.Event) {
+	if !handler.commandMode {
+		return
+	}
+
+	eventEmitter := views.GetCommandEventEmitter()
+
+	switch GetActionByEvent(event) {
 	case ACTION_LEFT:
 		eventEmitter.Emit(views.CommandLeft)
 	case ACTION_RIGHT:
 		eventEmitter.Emit(views.CommandRight)
 	case ACTION_DELETE:
 		eventEmitter.Emit(views.CommandDelete)
+	case ACTION_SPACE:
+		eventEmitter.EmitWithValue(views.CommandAdd, []byte{' '})
 	case ACTION_EXECUTE_COMMAND:
-		eventEmitter.Emit(views.CommandExecute)
-	case ENTER_NORMAL_MODE:
+		err := handler.doCommand(handler.container.GetCommandValue())
 		handler.commandMode = false
 		eventEmitter.Emit(views.CommandEnd)
+		if err != nil {
+			handler.resetWithStatus(fmt.Sprintf("%s", err))
+			return
+		}
 	default:
 		if event.Ch != 0 {
 			var u [utf8.UTFMax]byte
@@ -127,35 +175,119 @@ func (handler *Handler) handleCommandEvent(event termbox.Event) {
 		}
 	}
 
-	handler.container.RenderCommand()
+	handler.reset()
 }
 
-func (handler *Handler) getKeyEvent(event termbox.Event) Action {
-	for _, keybind := range KeybindList {
-		if event.Mod == keybind.Mod && event.Key == keybind.Key && event.Ch == keybind.Ch {
-			return keybind.Action
+func (handler *Handler) draw() {
+	handler.container.DrawTweets(handler.getTweets())
+	handler.container.DrawStatus(handler.command.GetViewModeAsString(), "")
+	handler.container.DrawCommand()
+}
+
+func (handler *Handler) drawWithStatus(status string) {
+	handler.container.DrawTweets(handler.getTweets())
+	handler.container.DrawStatus(handler.command.GetViewModeAsString(), status)
+	handler.container.DrawCommand()
+}
+
+func (handler *Handler) reset() {
+	handler.container.Clear()
+	handler.drawWithStatus("@" + handler.consumer.GetScreenName())
+	handler.container.Render()
+}
+
+func (handler *Handler) resetWithStatus(status string) {
+	handler.container.Clear()
+	handler.drawWithStatus(status)
+	handler.container.Render()
+}
+
+func (handler *Handler) finish() {
+	handler.container.Dispose()
+}
+
+func (handler *Handler) reload() {
+	handler.resetWithStatus("loading tweets...")
+	handler.loadTweets()
+	handler.reset()
+}
+
+func (handler *Handler) getTweets() []*twitter.Tweet {
+	viewMode := handler.command.GetViewMode()
+
+	var tweets []*twitter.Tweet
+	switch viewMode {
+	case MODE_TIMELINE:
+		tweets = GetTweetsStore().GetTimelineTweets()
+	case MODE_MENTION:
+		tweets = GetTweetsStore().GetMentionsTweets()
+	case MODE_LIST:
+		listName := handler.command.GetSlug()
+		tweets = GetTweetsStore().GetListTweets(listName)
+	}
+	return tweets
+}
+
+func (handler *Handler) loadTweets() error {
+	viewMode := handler.command.GetViewMode()
+
+	switch viewMode {
+	case MODE_TIMELINE:
+		tweets, err := handler.consumer.GetTimeline()
+		if err != nil {
+			return err
 		}
+		GetTweetsStore().SetTimelineTweets(tweets)
+	case MODE_MENTION:
+		tweets, err := handler.consumer.GetMentions()
+		if err != nil {
+			return err
+		}
+		GetTweetsStore().SetMentionsTweets(tweets)
+	case MODE_LIST:
+		listName := handler.command.GetSlug()
+		tweets, err := handler.consumer.GetListTimeline(listName)
+		if err != nil {
+			return err
+		}
+		GetTweetsStore().SetListTweets(listName, tweets)
 	}
-	return NO_ACTION
+
+	return nil
 }
 
-func (handler *Handler) loadTweet() error {
-	var (
-		list []twitter.Tweet
-		err  error
-	)
-	switch handler.container.GetViewMode() {
-	case views.MODE_TIMELINE:
-		list, err = handler.apiClient.GetTimeline()
-	case views.MODE_LIST:
-		list, err = handler.apiClient.GetTimeline()
-	case views.MODE_MENTION:
-		list, err = handler.apiClient.GetTimeline()
-	}
+func (handler *Handler) doCommand(value []byte) error {
+	commandType, arg, err := handler.command.Parse(value)
 	if err != nil {
 		return err
 	}
-	handler.container.RenderContents()
 
+	switch commandType {
+	case COMMAND_TIMELINE:
+		handler.command.SetViewMode(MODE_TIMELINE)
+	case COMMAND_MENTIONS:
+		handler.command.SetViewMode(MODE_MENTION)
+	case COMMAND_LIST:
+		handler.command.SetViewMode(MODE_LIST)
+		handler.command.SetSlug(arg)
+	case COMMAND_TWEET:
+		err = handler.consumer.Tweet(arg)
+	case COMMAND_REPLY:
+		tweet := handler.container.GetSelectedTweet(handler.getTweets())
+		err = handler.consumer.Reply(arg, tweet)
+	case COMMAND_FAVORITE:
+		tweet := handler.container.GetSelectedTweet(handler.getTweets())
+		err = handler.consumer.Favorite(tweet)
+	case COMMAND_RETWEET:
+		tweet := handler.container.GetSelectedTweet(handler.getTweets())
+		err = handler.consumer.Retweet(tweet)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	handler.resetWithStatus("loading tweets...")
+	handler.loadTweets()
 	return nil
 }

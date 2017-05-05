@@ -2,7 +2,6 @@ package twitter
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -33,7 +32,7 @@ func NewClient(accessToken string, accessTokenSecret string) *Client {
 	return &Client{token: token}
 }
 
-func (c *Client) GetTimeline() ([]Tweet, error) {
+func (c *Client) GetTimeline() ([]*Tweet, error) {
 	response, err := c.get(
 		apiURL("/1.1/statuses/home_timeline.json"),
 		map[string]string{},
@@ -45,19 +44,70 @@ func (c *Client) GetTimeline() ([]Tweet, error) {
 	return c.tweetsByResponse(response)
 }
 
-func (c *Client) GetList(ctx context.Context) {
+func (c *Client) GetMentions() ([]*Tweet, error) {
+	response, err := c.get(
+		apiURL("/1.1/statuses/mentions_timeline.json"),
+		map[string]string{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.tweetsByResponse(response)
 }
 
-func (c *Client) GetListTimeline(ctx context.Context) {
+func (c *Client) GetListTimeline(screenName string, slug string) ([]*Tweet, error) {
+	response, err := c.get(
+		apiURL("/1.1/lists/statuses.json"),
+		map[string]string{
+			"owner_screen_name": screenName,
+			"slug":              slug,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.tweetsByResponse(response)
 }
 
-func (c *Client) DoTweet(ctx context.Context) {
+func (c *Client) DoTweet(text string) error {
+	_, err := c.post(
+		apiURL("/1.1/statuses/update.json"),
+		map[string]string{
+			"status": text,
+		},
+	)
+	return err
 }
 
-func (c *Client) DoReply(ctx context.Context) {
+func (c *Client) DoReply(text string, tweetId int64) error {
+	_, err := c.post(
+		apiURL("/1.1/statuses/update.json"),
+		map[string]string{
+			"status":                text,
+			"in_reply_to_status_id": fmt.Sprintf("%d", tweetId),
+		},
+	)
+	return err
 }
 
-func (c *Client) DoRetweet(ctx context.Context) {
+func (c *Client) DoFavorite(tweetId int64) error {
+	_, err := c.post(
+		apiURL("/1.1/favorites/create.json"),
+		map[string]string{
+			"id": fmt.Sprintf("%d", tweetId),
+		},
+	)
+	return err
+}
+
+func (c *Client) DoRetweet(tweetId int64) error {
+	_, err := c.post(
+		apiURL("/1.1/statuses/retweet/%d.json", tweetId),
+		map[string]string{},
+	)
+	return err
 }
 
 func (c *Client) get(requestURL string, params map[string]string) (*http.Response, error) {
@@ -90,9 +140,9 @@ func (c *Client) consumer() *oauth.Consumer {
 	return c.cons
 }
 
-func (c *Client) tweetsByResponse(response *http.Response) ([]Tweet, error) {
+func (c *Client) tweetsByResponse(response *http.Response) ([]*Tweet, error) {
 	decoder := c.jsonDecoder(response)
-	tweets := []Tweet{}
+	tweets := []*Tweet{}
 	decoder.Decode(&tweets)
 	return tweets, nil
 }

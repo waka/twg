@@ -1,6 +1,5 @@
 bin
-
 vendor
+notes
 
 .DS_Store
-_note.md

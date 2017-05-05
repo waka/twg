@@ -18,11 +18,11 @@ var (
 )
 
 // Authenticate returns oauth access token.
-func Authenticate() (string, string, error) {
+func Authenticate() (*oauth.AccessToken, error) {
 	consumer := newTwitterConsumer()
 	requestToken, url, err := consumer.GetRequestTokenAndUrl("")
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	openBrowser(url)
@@ -30,10 +30,10 @@ func Authenticate() (string, string, error) {
 
 	accessToken, err := consumer.AuthorizeToken(requestToken, pinCode)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return accessToken.Token, accessToken.Secret, nil
+	return accessToken, nil
 }
 
 func newTwitterConsumer() *oauth.Consumer {
