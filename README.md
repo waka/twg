@@ -2,11 +2,17 @@
 
 twg is twitter client for cli, written by golang.
 
+## Screenshot
+
+![](artwork/screenshot_01.png)
+
 ## Install
 
 ```
 $ go get -u https://github.com/waka/twg-go
 ```
+
+or download binary file from [this link](https://github.com/waka/twg-go/releases/download/v0.1.0/twg).
 
 ## Start options
 
