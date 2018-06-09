@@ -9,7 +9,7 @@ twg is twitter client for cli, written by golang.
 ## Install
 
 ```
-$ go get -u https://github.com/waka/twg
+$ go get -u github.com/waka/twg
 ```
 
 or download binary file from [this link](https://github.com/waka/twg-go/releases/download/v0.1.0/twg).
