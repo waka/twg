@@ -33,14 +33,16 @@ Help Options:
 
 ## Key binds
 
-| Key        | Action        |
-|:-----------|:--------------|
-| ctrl + q   | Quit app      |
-| ctrl + r   | Reload tweets |
-| up or k    | Up cursor     |
-| down or j  | Up cursor     |
-| :          | Command mode  |
-| ctrl + c   | Normal mode   |
+| Key             | Action                               |
+|:----------------|:-------------------------------------|
+| ctrl + q        | Quit app                             |
+| ctrl + r        | Reload tweets                        |
+| up or k         | Up cursor                            |
+| down or j       | Up cursor                            |
+| gg              | Move cursor to top                   |
+| G               | Move cursor to bottom                |
+| :               | Command mode                         |
+| ctrl + c or Esc | Switch to Normal mode and clear keys |
 
 ## Command mode
 
