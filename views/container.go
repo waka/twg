@@ -58,11 +58,19 @@ func (container *Container) Render() {
 }
 
 func (container *Container) UpSelectedTweet(tweets []*twitter.Tweet) {
-	container.tweetsView.UpCursor(tweets)
+	container.tweetsView.UpCursor(tweets, container.tweetsView.cursorY-1)
 }
 
 func (container *Container) DownSelectedTweet(tweets []*twitter.Tweet) {
-	container.tweetsView.DownCursor(tweets)
+	container.tweetsView.DownCursor(tweets, container.tweetsView.cursorY+1)
+}
+
+func (container *Container) MoveToTopSelectedTweet(tweets []*twitter.Tweet) {
+	container.tweetsView.UpCursor(tweets, 0)
+}
+
+func (container *Container) MoveToBottomSelectedTweet(tweets []*twitter.Tweet) {
+	container.tweetsView.DownCursor(tweets, len(tweets)-1)
 }
 
 func (container *Container) GetSelectedTweet(tweets []*twitter.Tweet) *twitter.Tweet {

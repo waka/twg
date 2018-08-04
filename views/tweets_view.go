@@ -111,11 +111,11 @@ func (view *TweetsView) TopCursor() {
 	view.scroll = 0
 }
 
-func (view *TweetsView) UpCursor(tweets []*twitter.Tweet) {
+func (view *TweetsView) UpCursor(tweets []*twitter.Tweet, nextCursorY int) {
 	if view.cursorY == 0 {
 		return
 	}
-	view.cursorY -= 1
+	view.cursorY = nextCursorY
 
 	sum := 0
 	tweets = tweets[:view.cursorY]
@@ -131,11 +131,11 @@ func (view *TweetsView) UpCursor(tweets []*twitter.Tweet) {
 	}
 }
 
-func (view *TweetsView) DownCursor(tweets []*twitter.Tweet) {
+func (view *TweetsView) DownCursor(tweets []*twitter.Tweet, nextCursorY int) {
 	if view.cursorY == len(tweets)-1 {
 		return
 	}
-	view.cursorY += 1
+	view.cursorY = nextCursorY
 
 	_, height := getWindowSize()
 	sum := 0
