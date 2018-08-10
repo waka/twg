@@ -12,11 +12,12 @@ import (
 
 // EventHandler
 type Handler struct {
-	command     *Command
-	consumer    *Consumer
-	container   *views.Container
-	commandMode bool
-	quit        bool
+	command        *Command
+	consumer       *Consumer
+	container      *views.Container
+	commandMode    bool
+	quit           bool
+	actionKeyStack []rune
 }
 
 func NewHandler(command *Command, consumer *Consumer) *Handler {
@@ -106,11 +107,13 @@ func (handler *Handler) handleKeyEvent(event termbox.Event) {
 	eventEmitter := views.GetCommandEventEmitter()
 
 	switch GetActionByEvent(event) {
-	case ENTER_NORMAL_MODE:
+	case ENTER_NORMAL_MODE, ACTION_ESC:
 		handler.commandMode = false
+		handler.clearActionKeyStack()
 		eventEmitter.Emit(views.CommandEnd)
 	case ENTER_COMMAND_MODE:
 		handler.commandMode = true
+		handler.clearActionKeyStack()
 		eventEmitter.Emit(views.CommandStart)
 	}
 
@@ -134,13 +137,37 @@ func (handler *Handler) handleTweetKeyEvent(event termbox.Event) {
 	case ACTION_RELOAD:
 		handler.resetWithStatus("loading tweets...")
 		handler.loadTweets()
-	case ACTION_K, ACTION_UP:
+	case ACTION_UP:
 		handler.container.UpSelectedTweet(handler.getTweets())
-	case ACTION_J, ACTION_DOWN:
+	case ACTION_DOWN:
 		handler.container.DownSelectedTweet(handler.getTweets())
+	default:
+		handler.actionKeyStack = append(handler.actionKeyStack, event.Ch)
+		handler.handleMultipleTweetKeyEvent()
 	}
 
 	handler.reset()
+}
+
+func (handler *Handler) handleMultipleTweetKeyEvent() {
+	switch string(handler.actionKeyStack) {
+	case "k":
+		handler.clearActionKeyStack()
+		handler.container.UpSelectedTweet(handler.getTweets())
+	case "j":
+		handler.clearActionKeyStack()
+		handler.container.DownSelectedTweet(handler.getTweets())
+	case "gg":
+		handler.clearActionKeyStack()
+		handler.container.MoveToTopSelectedTweet(handler.getTweets())
+	case "G":
+		handler.clearActionKeyStack()
+		handler.container.MoveToBottomSelectedTweet(handler.getTweets())
+	}
+}
+
+func (handler *Handler) clearActionKeyStack() {
+	handler.actionKeyStack = nil
 }
 
 func (handler *Handler) handleCommandKeyEvent(event termbox.Event) {
