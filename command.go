@@ -16,6 +16,7 @@ const (
 	COMMAND_FAVORITE
 	COMMAND_RETWEET
 	COMMAND_NOT_FOUND
+	COMMAND_QUIT
 )
 
 var re = regexp.MustCompile(`:([a-z]*)\s?(.*)`)
@@ -105,6 +106,8 @@ func (command *Command) Parse(value []byte) (CommandType, string, error) {
 		commandType = COMMAND_FAVORITE
 	case "rt":
 		commandType = COMMAND_RETWEET
+	case "q":
+		commandType = COMMAND_QUIT
 	default:
 		commandType = COMMAND_NOT_FOUND
 		err = errors.New("Command is not found")

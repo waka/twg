@@ -308,6 +308,8 @@ func (handler *Handler) doCommand(value []byte) error {
 	case COMMAND_RETWEET:
 		tweet := handler.container.GetSelectedTweet(handler.getTweets())
 		err = handler.consumer.Retweet(tweet)
+	case COMMAND_QUIT:
+		handler.quit = true
 	}
 
 	if err != nil {
