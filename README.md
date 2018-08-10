@@ -53,6 +53,7 @@ Help Options:
 - `:reply {text}` - reply to selected tweet
 - `:fav` - fav to selected tweet
 - `:rt` - retweet to selected tweet
+- `:q` - quit app
 
 ## Reset access token
 
