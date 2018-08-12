@@ -2,7 +2,7 @@ package main
 
 const (
 	AppName = "twg"
-	Version = "v0.1.0"
+	Version = "v0.2.0"
 )
 
 type ViewMode int
