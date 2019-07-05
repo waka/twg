@@ -3,7 +3,7 @@ package main
 import (
 	"sort"
 
-	"github.com/waka/twg/twitter"
+  "github.com/waka/twg/twitter"
 )
 
 type TweetsStore struct {

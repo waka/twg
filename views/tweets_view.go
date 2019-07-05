@@ -6,7 +6,7 @@ import (
 
 	runewidth "github.com/mattn/go-runewidth"
 	termbox "github.com/nsf/termbox-go"
-	"github.com/waka/twg/twitter"
+	"github.com/limeless/twg/twitter"
 )
 
 type TweetsView struct {
