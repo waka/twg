@@ -2,7 +2,7 @@ package views
 
 import (
 	termbox "github.com/nsf/termbox-go"
-	"github.com/limeless/twg/twitter"
+	"github.com/waka/twg/twitter"
 )
 
 type Container struct {
