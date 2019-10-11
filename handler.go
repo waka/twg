@@ -163,6 +163,9 @@ func (handler *Handler) handleMultipleTweetKeyEvent() {
 	case "G":
 		handler.clearActionKeyStack()
 		handler.container.MoveToBottomSelectedTweet(handler.getTweets())
+  	case "r":
+    		handler.clearActionKeyStack()
+    		handler.reload()
 	}
 }
 

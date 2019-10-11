@@ -36,7 +36,7 @@ Help Options:
 | Key             | Action                               |
 |:----------------|:-------------------------------------|
 | ctrl + q        | Quit app                             |
-| ctrl + r        | Reload tweets                        |
+| ctrl + r or r   | Reload tweets                        |
 | up or k         | Up cursor                            |
 | down or j       | Up cursor                            |
 | gg              | Move cursor to top                   |
@@ -49,9 +49,9 @@ Help Options:
 - `:tl` - show home timeline
 - `:mentions` - show mentions tweets
 - `:list {slug}` - show list timeline
-- `:tweet {text}` - post tweet
-- `:reply {text}` - reply to selected tweet
-- `:fav` - fav to selected tweet
+- `:tweet {text}`, `:t {text}` - post tweet
+- `:reply {text}`, `:r {text}` - reply to selected tweet
+- `:fav`, `:f` - fav to selected tweet
 - `:rt` - retweet to selected tweet
 - `:q` - quit app
 

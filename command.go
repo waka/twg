@@ -92,17 +92,17 @@ func (command *Command) Parse(value []byte) (CommandType, string, error) {
 		if arg == "" {
 			err = errors.New("List name is required")
 		}
-	case "tweet":
+	case "tweet", "t":
 		commandType = COMMAND_TWEET
 		if arg == "" {
 			err = errors.New("text is required")
 		}
-	case "reply":
+	case "reply", "r":
 		commandType = COMMAND_REPLY
 		if arg == "" {
 			err = errors.New("text is required")
 		}
-	case "fav":
+	case "fav", "f":
 		commandType = COMMAND_FAVORITE
 	case "rt":
 		commandType = COMMAND_RETWEET
